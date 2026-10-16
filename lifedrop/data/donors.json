@@ -1,0 +1,20 @@
+[
+  {
+    "id": "donor-1",
+    "name": "Sara L.",
+    "bloodType": "O+",
+    "city": "Addis Ababa",
+    "phone": "0917777777",
+    "available": true,
+    "lastDonation": "2026-06-01"
+  },
+  {
+    "id": "donor-2",
+    "name": "Hanna W.",
+    "bloodType": "A+",
+    "city": "Addis Ababa",
+    "phone": "0918888888",
+    "available": true,
+    "lastDonation": "2026-04-15"
+  }
+]
