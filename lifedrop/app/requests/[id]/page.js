@@ -1,79 +1,70 @@
+"use client";
+
+import { use } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { findRequest, requests } from "@/lib/requests";
+import { useStore } from "@/lib/store";
+import { useHydrated } from "@/lib/useHydrated";
 
-export function generateStaticParams() {
-  return requests.map((r) => ({ id: r.id }));
-}
+export default function RequestDetailPage({ params }) {
+  const { id } = use(params);
+  const hydrated = useHydrated();
 
-export async function generateMetadata({ params }) {
-  const { id } = await params;
-  const req = findRequest(id);
-  if (!req) return { title: "Request not found", robots: { index: false } };
+  // Two separate primitive/stable selectors — no new arrays or objects.
+  const request = useStore((s) => s.requests.find((r) => r.id === id));
+  const hospital = useStore((s) =>
+    s.hospitals.find((h) => h.id === request?.hospitalId),
+  );
 
-  return {
-    title: `${req.bloodType} needed at ${req.hospital}`,
-    description: `${req.units} unit(s) of ${req.bloodType} blood needed at ${req.hospital}, ${req.city}.`,
-    alternates: { canonical: `/requests/${req.id}` },
-    openGraph: {
-      title: `${req.bloodType} blood needed — ${req.hospital}`,
-      description: `${req.units} unit(s) needed in ${req.city}.`,
-    },
-  };
-}
+  if (!hydrated) return <p>Loading…</p>;
 
-export default async function RequestDetailPage({ params }) {
-  const { id } = await params;
-  const req = findRequest(id);
-  if (!req) notFound();
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "MedicalProcedure",
-    name: `Blood donation request — ${req.bloodType}`,
-    description: `${req.units} unit(s) of ${req.bloodType} blood needed at ${req.hospital}, ${req.city}.`,
-  };
+  if (!request) {
+    return (
+      <div className="card">
+        <h1>Request not found</h1>
+        <Link href="/requests" className="btn btn-outline">
+          Back to requests
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <article className="card">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
       <Link href="/requests" className="text-muted">
         ← Back to requests
       </Link>
-
       <div className="flex items-center gap-2 mt-4 mb-2">
-        <span className="badge badge-blood">{req.bloodType}</span>
-        <span className={`badge badge-${req.urgency}`}>{req.urgency}</span>
+        <span className="badge badge-blood">{request.bloodType}</span>
+        <span className={`badge badge-${request.urgency}`}>
+          {request.urgency}
+        </span>
       </div>
-
-      <h1>{req.bloodType} blood needed</h1>
+      <h1>{request.bloodType} blood needed</h1>
       <p className="text-muted">
-        {req.units} unit{req.units > 1 ? "s" : ""} needed at {req.hospital},{" "}
-        {req.city}.
+        {request.units} units at {request.hospital}, {request.city}.
       </p>
 
       <div className="card">
         <h3>Hospital</h3>
-        <p>{req.hospital}</p>
-        <p className="text-muted">{req.city}</p>
+        <p>{request.hospital}</p>
+        <p className="text-muted">{request.city}</p>
       </div>
 
-      <div className="card">
-        <h3>Contact</h3>
-        <p>{req.contactName}</p>
-        <p>
-          <a href={`tel:${req.contactPhone}`}>{req.contactPhone}</a>
-        </p>
-      </div>
+      {hospital && (
+        <div className="card">
+          <h3>Contact the hospital directly</h3>
+          <p>
+            <a href={`tel:${hospital.phone}`} className="btn btn-primary">
+              Call {hospital.phone}
+            </a>
+          </p>
+        </div>
+      )}
 
-      {req.notes && (
+      {request.notes && (
         <div className="card">
           <h3>Notes</h3>
-          <p>{req.notes}</p>
+          <p>{request.notes}</p>
         </div>
       )}
     </article>

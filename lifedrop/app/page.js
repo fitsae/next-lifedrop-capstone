@@ -1,11 +1,23 @@
+"use client";
+
 import Link from "next/link";
-import { searchRequests } from "@/lib/requests";
-import RequestCard from "@/components/RequestCard";
+import { useMemo } from "react";
+import { useStore } from "@/lib/store";
+import { useHydrated } from "@/lib/useHydrated";
 
 export default function HomePage() {
-  const urgent = searchRequests()
-    .filter((r) => r.urgency === "high")
-    .slice(0, 3);
+  const hydrated = useHydrated();
+  const requests = useStore((s) => s.requests);
+
+  const urgent = useMemo(
+    () =>
+      requests
+        .filter((r) => r.status === "open" && r.urgency === "high")
+        .slice(0, 3),
+    [requests],
+  );
+
+  if (!hydrated) return <p>Loading…</p>;
 
   return (
     <div>
@@ -24,11 +36,29 @@ export default function HomePage() {
 
       <section className="mb-6">
         <h2>Urgent requests</h2>
-        <div className="grid grid-3">
-          {urgent.map((req) => (
-            <RequestCard key={req.id} request={req} />
-          ))}
-        </div>
+        {urgent.length === 0 ? (
+          <p className="text-muted">No urgent requests right now.</p>
+        ) : (
+          <div className="grid grid-3">
+            {urgent.map((req) => (
+              <article key={req.id} className="card">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="badge badge-blood">{req.bloodType}</span>
+                  <span className={`badge badge-${req.urgency}`}>
+                    {req.urgency}
+                  </span>
+                </div>
+                <h3>
+                  <Link href={`/requests/${req.id}`}>{req.hospital}</Link>
+                </h3>
+                <p className="text-muted">{req.city}</p>
+                <p className="text-muted">
+                  {req.units} unit{req.units > 1 ? "s" : ""} needed
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <section>
@@ -43,14 +73,13 @@ export default function HomePage() {
           <div className="card">
             <h3>2. Contact</h3>
             <p className="text-muted">
-              Open a request to see the hospital and contact phone number.
+              Open a request to see the hospital&apos;s phone number.
             </p>
           </div>
           <div className="card">
             <h3>3. Donate</h3>
             <p className="text-muted">
-              Visit the hospital and donate. Your one donation can save three
-              lives.
+              Visit the hospital and donate. One donation can save three lives.
             </p>
           </div>
         </div>

@@ -308,3 +308,30 @@ select:focus {
 .flex-wrap {
   flex-wrap: wrap;
 }
+.greeting {
+  font-weight: 500;
+  color: #b71c1c;
+}
+.auth-nav {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.badge-low {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+table th,
+table td {
+  vertical-align: top;
+  font-size: 0.95rem;
+}
+
+.greeting {
+  font-weight: 500;
+  color: #b71c1c;
+  white-space: nowrap;
+}

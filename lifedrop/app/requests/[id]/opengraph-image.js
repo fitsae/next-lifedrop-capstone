@@ -1,16 +1,9 @@
 import { ImageResponse } from "next/og";
-import { findRequest } from "@/lib/requests";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function OGImage({ params }) {
-  const { id } = await params;
-  const req = findRequest(id);
-  const bloodType = req?.bloodType ?? "Blood";
-  const hospital = req?.hospital ?? "LifeDrop";
-  const city = req?.city ?? "";
-
+export default async function OGImage() {
   return new ImageResponse(
     <div
       style={{
@@ -24,10 +17,12 @@ export default async function OGImage({ params }) {
         color: "#fff",
       }}
     >
-      <div style={{ fontSize: 140, fontWeight: 800 }}>{bloodType}</div>
-      <div style={{ fontSize: 48, marginTop: 20 }}>needed at {hospital}</div>
-      <div style={{ fontSize: 32, marginTop: 30, color: "#ffcdd2" }}>
-        {city}
+      <div style={{ fontSize: 96, fontWeight: 800 }}>LifeDrop</div>
+      <div style={{ fontSize: 44, marginTop: 20, color: "#ffcdd2" }}>
+        Blood request
+      </div>
+      <div style={{ fontSize: 32, marginTop: 30 }}>
+        Find blood. Save a life.
       </div>
     </div>,
     size,

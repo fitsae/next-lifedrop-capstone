@@ -1,69 +1,109 @@
 "use client";
 
-import { useActionState } from "react";
-import { createRequest } from "@/app/actions";
+import { useState } from "react";
+import { useStore } from "@/lib/store";
 
 const BLOOD_TYPES = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
-const initial = { success: false, errors: {} };
 
-export default function AddRequestForm() {
-  const [state, action, pending] = useActionState(createRequest, initial);
+export default function AddRequestForm({ hospitalId }) {
+  const create = useStore((s) => s.createRequest);
+
+  const [values, setValues] = useState({
+    bloodType: "",
+    city: "",
+    units: 1,
+    urgency: "medium",
+    notes: "",
+  });
+  const [errors, setErrors] = useState({});
+
+  function set(k, v) {
+    setValues((x) => ({ ...x, [k]: v }));
+  }
+
+  function submit(e) {
+    e.preventDefault();
+    const errs = {};
+    if (!values.bloodType) errs.bloodType = "Required.";
+    if (!values.city.trim()) errs.city = "Required.";
+    if (!values.units || values.units < 1) errs.units = "Must be ≥ 1.";
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
+
+    create(hospitalId, {
+      bloodType: values.bloodType,
+      city: values.city.trim(),
+      units: Number(values.units),
+      urgency: values.urgency,
+      notes: values.notes.trim(),
+    });
+
+    setValues({
+      bloodType: "",
+      city: "",
+      units: 1,
+      urgency: "medium",
+      notes: "",
+    });
+    setErrors({});
+  }
 
   return (
-    <form action={action} className="card">
+    <form onSubmit={submit} className="card">
       <div className="form-row">
-        <label htmlFor="bloodType">Blood type</label>
-        <select id="bloodType" name="bloodType">
+        <label>Blood type</label>
+        <select
+          value={values.bloodType}
+          onChange={(e) => set("bloodType", e.target.value)}
+        >
           <option value="">Select…</option>
           {BLOOD_TYPES.map((t) => (
             <option key={t}>{t}</option>
           ))}
         </select>
-        {state.errors?.bloodType && (
-          <p className="form-error">{state.errors.bloodType}</p>
-        )}
+        {errors.bloodType && <p className="form-error">{errors.bloodType}</p>}
       </div>
-
       <div className="form-row">
-        <label htmlFor="city">City</label>
-        <input id="city" name="city" placeholder="Addis Ababa" />
-        {state.errors?.city && (
-          <p className="form-error">{state.errors.city}</p>
-        )}
+        <label>City</label>
+        <input
+          value={values.city}
+          onChange={(e) => set("city", e.target.value)}
+        />
+        {errors.city && <p className="form-error">{errors.city}</p>}
       </div>
-
       <div className="form-row">
-        <label htmlFor="hospital">Hospital</label>
-        <input id="hospital" name="hospital" />
-        {state.errors?.hospital && (
-          <p className="form-error">{state.errors.hospital}</p>
-        )}
+        <label>Units needed</label>
+        <input
+          type="number"
+          min="1"
+          value={values.units}
+          onChange={(e) => set("units", e.target.value)}
+        />
+        {errors.units && <p className="form-error">{errors.units}</p>}
       </div>
-
       <div className="form-row">
-        <label htmlFor="units">Units needed</label>
-        <input id="units" name="units" type="number" min="1" defaultValue={1} />
-        {state.errors?.units && (
-          <p className="form-error">{state.errors.units}</p>
-        )}
-      </div>
-
-      <div className="form-row">
-        <label htmlFor="urgency">Urgency</label>
-        <select id="urgency" name="urgency" defaultValue="medium">
+        <label>Urgency</label>
+        <select
+          value={values.urgency}
+          onChange={(e) => set("urgency", e.target.value)}
+        >
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
       </div>
-
       <div className="form-row">
-        <label htmlFor="notes">Notes (optional)</label>
-        <textarea id="notes" name="notes" rows={3} />
+        <label>Notes (optional)</label>
+        <textarea
+          rows={3}
+          value={values.notes}
+          onChange={(e) => set("notes", e.target.value)}
+        />
       </div>
-
-      <button type="submit" className="btn btn-primary" disabled={pending}>
-        {pending ? "Posting…" : "Post request"}
+      <button className="btn btn-primary" type="submit">
+        Post request
       </button>
     </form>
   );

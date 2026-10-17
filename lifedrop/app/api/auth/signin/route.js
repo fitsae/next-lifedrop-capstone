@@ -1,40 +1,43 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+const ADMIN_EMAIL = "admin@lifedrop.et";
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD || "lifedrop123";
 
 export async function POST(request) {
   const formData = await request.formData();
-  const email = formData.get("email");
+  const email = String(formData.get("email") || "")
+    .trim()
+    .toLowerCase();
   const password = formData.get("password");
   const next = formData.get("next") || "/dashboard";
 
-  const accounts = {
-    "hospital@lifedrop.et": { id: "hospital-1", password: DEMO_PASSWORD },
-    "admin@lifedrop.et": { id: "admin-1", password: DEMO_PASSWORD },
-  };
+  if (email === ADMIN_EMAIL && password === DEMO_PASSWORD) {
+    return redirectWithSession(request, "admin", next);
+  }
 
-  const account = accounts[email];
-  if (!account || account.password !== password) {
+  if (!email || !email.includes("@")) {
     return new Response("Invalid credentials", { status: 401 });
   }
 
-  if (
-    typeof next !== "string" ||
-    !next.startsWith("/") ||
-    next.startsWith("//")
-  ) {
-    return NextResponse.redirect(new URL("/dashboard", request.url), 303);
-  }
+  return redirectWithSession(request, `hospital:${email}`, next);
+}
 
-  const store = await cookies();
-  store.set("session", account.id, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7,
-    path: "/",
-  });
+function redirectWithSession(request, userId, next) {
+  const safeNext =
+    typeof next === "string" && next.startsWith("/") && !next.startsWith("//")
+      ? next
+      : "/dashboard";
 
-  return NextResponse.redirect(new URL(next, request.url), 303);
+  const response = NextResponse.redirect(new URL(safeNext, request.url), 303);
+
+  // Do NOT let Next URL-encode the value.
+  response.headers.append(
+    "Set-Cookie",
+    `session=${userId}; Path=/; Max-Age=${60 * 60 * 24 * 7}; SameSite=Lax${
+      process.env.NODE_ENV === "production" ? "; Secure" : ""
+    }; HttpOnly`,
+  );
+
+  return response;
 }

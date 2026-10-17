@@ -1,19 +1,30 @@
+"use client";
+
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
-import { getRequestsByOwner } from "@/lib/requests";
+import { useStore } from "@/lib/store";
+import { useSession } from "@/lib/useSession";
 import AddRequestForm from "@/components/AddRequestForm";
 
-export const metadata = {
-  title: "Manage Requests",
-  robots: { index: false, follow: false },
-};
+export default function ManageRequestsPage() {
+  const session = useSession();
+  const hospitals = useStore((s) => s.hospitals);
+  const requests = useStore((s) => s.requests);
 
-export default async function ManageRequestsPage() {
-  const session = await getSession();
-  if (!session) redirect("/login?next=/dashboard/requests");
+  if (session === undefined) return <p>Loading…</p>;
 
-  const own = getRequestsByOwner(session.userId);
+  if (!session || session.role !== "hospital") {
+    return (
+      <p className="text-muted">Sign in as a hospital to manage requests.</p>
+    );
+  }
+
+  const hospital = useMemo(() => {
+    if (!session?.email) return undefined;
+    const norm = session.email.trim().toLowerCase();
+    return hospitals.find((h) => h.email.trim().toLowerCase() === norm);
+  }, [hospitals, session]);
+
+  const own = requests.filter((r) => r.hospitalId === hospital.id);
 
   return (
     <div>
@@ -37,10 +48,7 @@ export default async function ManageRequestsPage() {
                   <Link href={`/requests/${r.id}`}>{r.hospital}</Link>
                 </h3>
                 <p className="text-muted">
-                  {r.city} · {r.units} unit(s)
-                </p>
-                <p className="text-muted" style={{ fontSize: "0.85rem" }}>
-                  Status: {r.status}
+                  {r.city} · {r.units} unit(s) · {r.status}
                 </p>
               </article>
             ))
@@ -49,7 +57,7 @@ export default async function ManageRequestsPage() {
 
         <section>
           <h2>Post a new request</h2>
-          <AddRequestForm />
+          <AddRequestForm hospitalId={hospital.id} />
         </section>
       </div>
     </div>
