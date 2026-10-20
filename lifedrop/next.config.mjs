@@ -8,8 +8,8 @@ const nextConfig = {
   partialPrefetching: true,
   reactCompiler: true,
   output: "export", // Enables static HTML export
-  basePath: "/your-repo-name", // Replace with your exact GitHub repository name
-  assetPrefix: "/your-repo-name/", // Must match basePath with a trailing slash
+  basePath: "/next-lifedrop-capstone", // Replace with your exact GitHub repository name
+  assetPrefix: "next-lifedrop-capstone", // Must match basePath with a trailing slash
   images: {
     unoptimized: true, // Required because GitHub Pages can't run Next.js image optimization
   },
