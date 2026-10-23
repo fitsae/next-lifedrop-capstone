@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { useSession } from "@/lib/useSession";
@@ -10,6 +11,12 @@ export default function ManageRequestsPage() {
   const hospitals = useStore((s) => s.hospitals);
   const requests = useStore((s) => s.requests);
 
+  const hospital = useMemo(() => {
+    if (!session?.email) return undefined;
+    const norm = session.email.trim().toLowerCase();
+    return hospitals.find((h) => h.email.trim().toLowerCase() === norm);
+  }, [hospitals, session]);
+
   if (session === undefined) return <p>Loading…</p>;
 
   if (!session || session.role !== "hospital") {
@@ -18,11 +25,14 @@ export default function ManageRequestsPage() {
     );
   }
 
-  const hospital = useMemo(() => {
-    if (!session?.email) return undefined;
-    const norm = session.email.trim().toLowerCase();
-    return hospitals.find((h) => h.email.trim().toLowerCase() === norm);
-  }, [hospitals, session]);
+  if (!hospital) {
+    return (
+      <p className="text-muted">
+        No hospital is registered with this account. Ask an admin to register
+        it.
+      </p>
+    );
+  }
 
   const own = requests.filter((r) => r.hospitalId === hospital.id);
 
